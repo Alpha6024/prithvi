@@ -12,6 +12,14 @@ A full-stack social platform for eco-activists to share actions, join campaigns,
 | Backend API | Deployed on Render |
 
 ---
+Some Glimpse : 
+<img width="484" height="760" alt="image" src="https://github.com/user-attachments/assets/fe8fe119-9113-4c8d-8ccd-62e329f0123f" />
+<img width="490" height="753" alt="image" src="https://github.com/user-attachments/assets/c2ad1d77-68f1-408a-8d75-eed59b70b1e2" />
+<img width="1880" height="877" alt="image" src="https://github.com/user-attachments/assets/06312e5d-18bd-4da9-8875-1fee4c0e8a97" />
+
+
+
+---
 
 ## ✨ Features
 
