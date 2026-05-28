@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Plus, Home, Target, Trophy, ArrowLeft, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function Profile() {
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
@@ -16,7 +18,7 @@ export default function Profile() {
 
     useEffect(() => {
         if (userData?._id) {
-            fetch(`http://localhost:3000/user/trustscore/${userData._id}`)
+            fetch(`${API}/user/trustscore/${userData._id}`)
                 .then(r => r.json())
                 .then(d => { if (d.success) setTrustScore(d.trustScore); })
                 .catch(err => console.error(err));
@@ -25,38 +27,27 @@ export default function Profile() {
 
     const fetchUserData = async () => {
         try {
-            const response = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
-            const data = await response.json();
-            if (data.success) {
-                setUserData(data.user);
-            } else {
-                navigate('/acc');
-            }
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-            navigate('/acc');
-        }
+            const res = await fetch(`${API}/auth/user`, { credentials: 'include' });
+            const data = await res.json();
+            if (data.success) setUserData(data.user);
+            else navigate('/acc');
+        } catch { navigate('/acc'); }
     };
 
     const handleLogout = async () => {
         try {
-            await fetch('http://localhost:3000/auth/logout', { method: 'POST', credentials: 'include' });
+            await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' });
             navigate('/acc');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
+        } catch { console.error('Logout failed'); }
     };
 
     const fetchUserPosts = async () => {
         try {
-            const response = await fetch('http://localhost:3000/post/myposts', { credentials: 'include' });
-            const data = await response.json();
+            const res = await fetch(`${API}/post/myposts`, { credentials: 'include' });
+            const data = await res.json();
             if (data.success) setUserPosts(data.posts);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-            setLoading(false);
-        }
+        } catch { console.error('Error fetching posts'); }
+        finally { setLoading(false); }
     };
 
     if (loading) {
@@ -79,22 +70,20 @@ export default function Profile() {
 
     return (
         <div className="max-w-md mx-auto bg-white min-h-screen">
-            {/* Header */}
             <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-                <div className="flex items-center justify-between p-4">
-                    <button onClick={() => navigate("/acc/home")}>
+                <div className="flex items-center justify-between px-4 py-3">
+                    <button onClick={() => navigate("/acc/home")} className="p-1">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     <h1 className="font-semibold">My Profile</h1>
-                    <button onClick={handleLogout} className="flex items-center gap-1 text-red-500">
+                    <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 p-1">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </div>
             </div>
 
-            {/* Cover + Avatar */}
             <div className="relative">
-                <div className="h-32 bg-gradient-to-br from-green-400 to-green-600">
+                <div className="h-28 bg-gradient-to-br from-green-400 to-green-600">
                     {userData.avatar && (
                         <img src={userData.avatar} alt="Cover" className="w-full h-full object-cover blur-sm opacity-50" />
                     )}
@@ -103,25 +92,23 @@ export default function Profile() {
                     <img
                         src={userData.avatar || 'https://via.placeholder.com/200'}
                         alt="Profile"
-                        className="w-24 h-24 rounded-full border-4 border-white object-cover"
+                        className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md"
                     />
                 </div>
             </div>
 
-            {/* User Info */}
             <div className="pt-14 px-4 text-center">
                 <h2 className="text-xl font-bold">{userData.name}</h2>
                 <p className="text-sm text-green-600 mb-1">@{userData.username}</p>
-                <p className="text-sm text-gray-500 mb-4">{userData.email}</p>
+                <p className="text-sm text-gray-500 mb-4 break-all">{userData.email}</p>
                 <button
                     onClick={() => navigate("/newacc")}
-                    className="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                    className="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl active:bg-gray-50 transition-colors"
                 >
                     Edit Profile
                 </button>
             </div>
 
-            {/* Stats + Trust Score */}
             <div className="flex items-center justify-around py-4 px-4 mt-4 border-y border-gray-200">
                 {stats.map((stat, index) => (
                     <div key={index} className="text-center">
@@ -129,20 +116,13 @@ export default function Profile() {
                         <div className="text-xs text-gray-500 uppercase">{stat.label}</div>
                     </div>
                 ))}
-
-                {/* Trust Score Circle */}
                 <div className="text-center">
                     <div className="relative w-14 h-14 mx-auto mb-1">
                         <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
                             <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                            <circle
-                                cx="18" cy="18" r="15.9" fill="none"
-                                stroke={trustColor}
-                                strokeWidth="3"
-                                strokeDasharray={`${trustScore} 100`}
-                                strokeLinecap="round"
-                                style={{ transition: 'stroke-dasharray 0.8s ease' }}
-                            />
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke={trustColor} strokeWidth="3"
+                                strokeDasharray={`${trustScore} 100`} strokeLinecap="round"
+                                style={{ transition: 'stroke-dasharray 0.8s ease' }} />
                         </svg>
                         <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: trustColor }}>
                             {trustScore}%
@@ -155,16 +135,13 @@ export default function Profile() {
                 </div>
             </div>
 
-            {/* Posts Grid */}
             <div className="px-4 py-2 mt-2">
                 <div className="flex gap-2 border-b border-gray-200 mb-2">
-                    <button className="flex items-center gap-1 px-4 py-3 text-green-600 border-b-2 border-green-600 font-medium text-sm">
-                        Posts
-                    </button>
+                    <button className="flex items-center gap-1 px-4 py-3 text-green-600 border-b-2 border-green-600 font-medium text-sm">Posts</button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-1 px-1 pb-20">
+            <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-24">
                 {userPosts.length > 0 ? (
                     userPosts.map((post, index) => (
                         <div key={index} className="aspect-square bg-gray-200 relative">
@@ -180,28 +157,29 @@ export default function Profile() {
                         </div>
                     ))
                 ) : (
-                    <div className="col-span-3 text-center py-8 text-gray-500">No posts yet</div>
+                    <div className="col-span-3 text-center py-12 text-gray-400">
+                        <p className="text-sm">No posts yet</p>
+                    </div>
                 )}
             </div>
 
-            {/* Bottom Nav */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 max-w-md mx-auto">
-                <div className="flex items-center justify-around py-3">
-                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-1 text-gray-500">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+                <div className="max-w-md mx-auto flex items-center justify-around py-2">
+                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <Home className="w-6 h-6" /><span className="text-xs">Home</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/campaign")} className="flex flex-col items-center gap-1 text-gray-500">
+                    <button onClick={() => navigate("/acc/home/campaign")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <Target className="w-6 h-6" /><span className="text-xs">Campaign</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-1 text-gray-500">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-6 shadow-lg">
+                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
+                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-5 shadow-lg">
                             <Plus className="w-6 h-6 text-white" strokeWidth={3} />
                         </div>
                     </button>
-                    <button onClick={() => navigate("/acc/home/leaderboard")} className="flex flex-col items-center gap-1 text-gray-500">
-                        <Trophy className="w-6 h-6" /><span className="text-xs">Leaderboard</span>
+                    <button onClick={() => navigate("/acc/home/leaderboard")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
+                        <Trophy className="w-6 h-6" /><span className="text-xs">Ranks</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-green-600">
+                    <button className="flex flex-col items-center gap-0.5 text-green-600 min-w-[48px] py-1">
                         <User className="w-6 h-6" fill="currentColor" /><span className="text-xs">Profile</span>
                     </button>
                 </div>

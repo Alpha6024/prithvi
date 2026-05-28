@@ -2,24 +2,21 @@ import { Plus, Home, Target, Trophy, User, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function Leaderboard() {
     const navigate = useNavigate();
     const [rankings, setRankings] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [tab, setTab] = useState('monthly'); // 'monthly' | 'alltime'
+    const [tab, setTab] = useState('monthly');
 
-    useEffect(() => {
-        fetchCurrentUser();
-    }, []);
-
-    useEffect(() => {
-        fetchLeaderboard();
-    }, [tab]);
+    useEffect(() => { fetchCurrentUser(); }, []);
+    useEffect(() => { fetchLeaderboard(); }, [tab]);
 
     const fetchCurrentUser = async () => {
         try {
-            const res = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+            const res = await fetch(`${API}/auth/user`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCurrentUser(data.user);
         } catch (err) { console.error(err); }
@@ -28,9 +25,7 @@ export default function Leaderboard() {
     const fetchLeaderboard = async () => {
         setLoading(true);
         try {
-            const url = tab === 'monthly'
-                ? 'http://localhost:3000/leaderboard/monthly'
-                : 'http://localhost:3000/leaderboard/alltime';
+            const url = tab === 'monthly' ? `${API}/leaderboard/monthly` : `${API}/leaderboard/alltime`;
             const res = await fetch(url, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setRankings(data.rankings);
@@ -39,15 +34,9 @@ export default function Leaderboard() {
         finally { setLoading(false); }
     };
 
-    const first = rankings[0];
-    const second = rankings[1];
-    const third = rankings[2];
-    const rest = rankings.slice(3);
-
+    const first = rankings[0], second = rankings[1], third = rankings[2], rest = rankings.slice(3);
     const myRank = rankings.findIndex(r => r.user._id === currentUser?._id) + 1;
     const myData = rankings.find(r => r.user._id === currentUser?._id);
-
-    // Current month label e.g. "February 2026"
     const monthLabel = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
     const AvatarCircle = ({ user, size, borderColor }) => (
@@ -62,28 +51,18 @@ export default function Leaderboard() {
 
     return (
         <div className="max-w-md mx-auto bg-gray-50 min-h-screen pb-20">
-
-            {/* Header */}
             <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-                <div className="flex items-center justify-between p-4">
-                    <h1 className="text-lg font-semibold">Leaderboard</h1>
+                <div className="flex items-center justify-between px-4 py-3">
+                    <h1 className="text-base font-semibold">Leaderboard</h1>
                     {tab === 'monthly' && (
                         <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{monthLabel}</span>
                     )}
                 </div>
-
-                {/* Tab Switch */}
                 <div className="flex border-b border-gray-200">
-                    <button
-                        onClick={() => setTab('monthly')}
-                        className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'monthly' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-                    >
+                    <button onClick={() => setTab('monthly')} className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'monthly' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}>
                         🗓 Monthly
                     </button>
-                    <button
-                        onClick={() => setTab('alltime')}
-                        className={`flex-1 py-3 text-sm font-semibold transition-colors ${tab === 'alltime' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-                    >
+                    <button onClick={() => setTab('alltime')} className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'alltime' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}>
                         🏆 All Time
                     </button>
                 </div>
@@ -95,56 +74,48 @@ export default function Leaderboard() {
                 </div>
             ) : (
                 <div className="p-4">
-
-                    {/* Podium */}
                     {rankings.length > 0 ? (
-                        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl p-6 mb-4">
-                            <div className="flex items-end justify-center gap-6">
-
-                                {/* 2nd */}
+                        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl p-5 mb-4">
+                            <div className="flex items-end justify-center gap-4">
                                 {second && (
                                     <div className="flex flex-col items-center">
                                         <div className="relative mb-2">
-                                            <AvatarCircle user={second.user} size="w-16 h-16" borderColor="border-gray-400" />
+                                            <AvatarCircle user={second.user} size="w-14 h-14" borderColor="border-gray-400" />
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gray-400 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">2</div>
                                         </div>
                                         <div className="text-center mt-3">
-                                            <div className="font-semibold text-sm">{second.user.name}</div>
-                                            <div className="text-xs text-gray-500">@{second.user.username}</div>
-                                            <div className="text-lg font-bold text-green-600 mt-1">{second.totalLikes}</div>
+                                            <div className="font-semibold text-xs truncate max-w-[70px]">{second.user.name}</div>
+                                            <div className="text-xs text-gray-500 truncate max-w-[70px]">@{second.user.username}</div>
+                                            <div className="text-base font-bold text-green-600 mt-1">{second.totalLikes}</div>
                                             <div className="text-xs text-gray-400">likes</div>
                                         </div>
                                     </div>
                                 )}
-
-                                {/* 1st */}
                                 {first && (
-                                    <div className="flex flex-col items-center -mt-8">
+                                    <div className="flex flex-col items-center -mt-6">
                                         <div className="text-2xl mb-1">👑</div>
                                         <div className="relative mb-2">
-                                            <AvatarCircle user={first.user} size="w-20 h-20" borderColor="border-yellow-400" />
+                                            <AvatarCircle user={first.user} size="w-18 h-18" borderColor="border-yellow-400" />
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center">1</div>
                                         </div>
                                         <div className="text-center mt-3">
-                                            <div className="font-semibold text-sm">{first.user.name}</div>
-                                            <div className="text-xs text-gray-500">@{first.user.username}</div>
+                                            <div className="font-semibold text-sm truncate max-w-[80px]">{first.user.name}</div>
+                                            <div className="text-xs text-gray-500 truncate max-w-[80px]">@{first.user.username}</div>
                                             <div className="text-xl font-bold text-green-600 mt-1">{first.totalLikes}</div>
                                             <div className="text-xs text-gray-400">likes</div>
                                         </div>
                                     </div>
                                 )}
-
-                                {/* 3rd */}
                                 {third && (
                                     <div className="flex flex-col items-center">
                                         <div className="relative mb-2">
-                                            <AvatarCircle user={third.user} size="w-16 h-16" borderColor="border-orange-400" />
+                                            <AvatarCircle user={third.user} size="w-14 h-14" borderColor="border-orange-400" />
                                             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-400 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">3</div>
                                         </div>
                                         <div className="text-center mt-3">
-                                            <div className="font-semibold text-sm">{third.user.name}</div>
-                                            <div className="text-xs text-gray-500">@{third.user.username}</div>
-                                            <div className="text-lg font-bold text-green-600 mt-1">{third.totalLikes}</div>
+                                            <div className="font-semibold text-xs truncate max-w-[70px]">{third.user.name}</div>
+                                            <div className="text-xs text-gray-500 truncate max-w-[70px]">@{third.user.username}</div>
+                                            <div className="text-base font-bold text-green-600 mt-1">{third.totalLikes}</div>
                                             <div className="text-xs text-gray-400">likes</div>
                                         </div>
                                     </div>
@@ -159,14 +130,10 @@ export default function Leaderboard() {
                         </div>
                     )}
 
-                    {/* Rank 4-10 */}
                     {rest.length > 0 && (
                         <div className="bg-white rounded-2xl overflow-hidden shadow-sm mb-4">
                             {rest.map((item, index) => (
-                                <div
-                                    key={item._id}
-                                    className={`flex items-center gap-3 p-4 border-b border-gray-100 last:border-b-0 ${item.user._id === currentUser?._id ? 'bg-green-50' : ''}`}
-                                >
+                                <div key={item._id} className={`flex items-center gap-3 p-4 border-b border-gray-100 last:border-b-0 ${item.user._id === currentUser?._id ? 'bg-green-50' : ''}`}>
                                     <div className="text-gray-400 font-bold text-sm w-8">#{index + 4}</div>
                                     {item.user.avatar ? (
                                         <img src={item.user.avatar} className="w-10 h-10 rounded-full object-cover" alt="" />
@@ -175,11 +142,11 @@ export default function Leaderboard() {
                                             <User className="w-5 h-5 text-green-600" />
                                         </div>
                                     )}
-                                    <div className="flex-1">
-                                        <div className="font-semibold text-sm">{item.user.name}</div>
-                                        <div className="text-xs text-gray-500">@{item.user.username}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-sm truncate">{item.user.name}</div>
+                                        <div className="text-xs text-gray-500 truncate">@{item.user.username}</div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right shrink-0">
                                         <div className="flex items-center gap-1 text-green-600 font-bold text-sm">
                                             <TrendingUp className="w-4 h-4" />{item.totalLikes}
                                         </div>
@@ -190,7 +157,6 @@ export default function Leaderboard() {
                         </div>
                     )}
 
-                    {/* My rank card */}
                     {myData ? (
                         <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-4 flex items-center gap-3 text-white shadow-lg">
                             {myData.user.avatar ? (
@@ -200,13 +166,13 @@ export default function Leaderboard() {
                                     <User className="w-6 h-6 text-white" />
                                 </div>
                             )}
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <div className="text-xs opacity-90">Your {tab === 'monthly' ? 'Monthly' : 'All Time'} Rank</div>
-                                <div className="font-bold text-lg">#{myRank} <span className="text-sm font-normal">@{myData.user.username}</span></div>
+                                <div className="font-bold text-lg truncate">#{myRank} <span className="text-sm font-normal">@{myData.user.username}</span></div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                                 <div className="text-2xl font-bold">{myData.totalLikes}</div>
-                                <div className="text-xs opacity-90">Total Likes</div>
+                                <div className="text-xs opacity-90">Likes</div>
                             </div>
                         </div>
                     ) : currentUser && (
@@ -220,12 +186,10 @@ export default function Leaderboard() {
                             )}
                             <div className="flex-1">
                                 <div className="text-xs opacity-90">Your Rank</div>
-                                <div className="font-bold text-lg">Unranked</div>
-                                <div className="text-xs opacity-75">
-                                    {tab === 'monthly' ? 'Post this month to get ranked!' : 'Post something to get ranked!'}
-                                </div>
+                                <div className="font-bold">Unranked</div>
+                                <div className="text-xs opacity-75">{tab === 'monthly' ? 'Post this month to get ranked!' : 'Post something to get ranked!'}</div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                                 <div className="text-2xl font-bold">0</div>
                                 <div className="text-xs opacity-90">Likes</div>
                             </div>
@@ -234,31 +198,27 @@ export default function Leaderboard() {
                 </div>
             )}
 
-            <button
-                onClick={() => navigate("/acc/bot")}
-                className="fixed bottom-24 right-4 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-xl z-20 hover:bg-green-600 transition-colors"
-            >
-                <span className="text-2xl">🤖</span>
+            <button onClick={() => navigate("/acc/bot")} className="fixed bottom-20 right-4 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl z-20 active:bg-green-600">
+                <span className="text-xl">🤖</span>
             </button>
 
-            {/* Bottom Nav */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 max-w-md mx-auto">
-                <div className="flex items-center justify-around py-3">
-                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-1 text-gray-500">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+                <div className="max-w-md mx-auto flex items-center justify-around py-2">
+                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <Home className="w-6 h-6" /><span className="text-xs">Home</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/campaign")} className="flex flex-col items-center gap-1 text-gray-500">
+                    <button onClick={() => navigate("/acc/home/campaign")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <Target className="w-6 h-6" /><span className="text-xs">Campaign</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-1 text-gray-500">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-6 shadow-lg">
+                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
+                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-5 shadow-lg">
                             <Plus className="w-6 h-6 text-white" strokeWidth={3} />
                         </div>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-green-600">
-                        <Trophy className="w-6 h-6" fill="currentColor" /><span className="text-xs">Leaderboard</span>
+                    <button className="flex flex-col items-center gap-0.5 text-green-600 min-w-[48px] py-1">
+                        <Trophy className="w-6 h-6" fill="currentColor" /><span className="text-xs">Ranks</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/profile")} className="flex flex-col items-center gap-1 text-gray-500">
+                    <button onClick={() => navigate("/acc/home/profile")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <User className="w-6 h-6" /><span className="text-xs">Profile</span>
                     </button>
                 </div>

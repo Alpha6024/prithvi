@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Users, Target, LogOut, DollarSign, Send, Eye, Lock, Shield, AlertTriangle, CheckCircle, XCircle, Flag, Trash2, RefreshCw } from "lucide-react";
 
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
+const API = import.meta.env.VITE_API_URL;
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "prithvi@2026";
-const RAZORPAY_KEY = "rzp_test_SGtmofw4CWXzzG";
-const API = "http://localhost:3000";
 
 export default function Admin() {
     const [loggedIn, setLoggedIn] = useState(false);

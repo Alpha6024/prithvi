@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const Userschema = new mongoose.Schema({
     googleId: { type: String, unique: true, sparse: true },
+    supabase_uid: { type: String, unique: true, sparse: true },
     id: { type: Number, unique: true, sparse: true },
     name: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },

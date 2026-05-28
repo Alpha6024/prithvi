@@ -2,13 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Bot, User, Loader } from 'lucide-react';
 
-export default function bot() {
+const API = import.meta.env.VITE_API_URL;
+
+export default function BotPage() {
     const navigate = useNavigate();
     const [messages, setMessages] = useState([
-        {
-            role: 'bot',
-            text: "Hi! 👋 I'm your eco-app assistant. I know everything about the posts, campaigns, and users on this platform. Ask me anything!"
-        }
+        { role: 'bot', text: "Hi! 👋 I'm your eco-app assistant. I know everything about the posts, campaigns, and users on this platform. Ask me anything!" }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,48 +19,33 @@ export default function bot() {
 
     const sendMessage = async () => {
         if (!input.trim() || loading) return;
-
         const userMessage = input.trim();
         setInput('');
         setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
         setLoading(true);
-
         try {
-            const res = await fetch('http://localhost:3000/ai/chat', {
+            const res = await fetch(`${API}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ message: userMessage })
             });
-
             const data = await res.json();
-
-            if (data.success) {
-                setMessages(prev => [...prev, { role: 'bot', text: data.reply }]);
-            } else {
-                setMessages(prev => [...prev, { role: 'bot', text: "Sorry, I couldn't process that. Try again!" }]);
-            }
-        } catch (err) {
+            setMessages(prev => [...prev, { role: 'bot', text: data.success ? data.reply : "Sorry, I couldn't process that. Try again!" }]);
+        } catch {
             setMessages(prev => [...prev, { role: 'bot', text: "Connection error. Please try again." }]);
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     };
 
     return (
         <div className="max-w-md mx-auto bg-gray-50 min-h-screen flex flex-col">
-
-            {/* Header */}
             <div className="bg-white sticky top-0 z-10 border-b border-gray-200">
-                <div className="flex items-center gap-3 p-4">
-                    <button onClick={() => navigate(-1)} className="text-gray-700">
+                <div className="flex items-center gap-3 px-4 py-3">
+                    <button onClick={() => navigate(-1)} className="p-1 text-gray-700">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center">
@@ -74,7 +58,6 @@ export default function bot() {
                 </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
                 {messages.map((msg, i) => (
                     <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -83,7 +66,7 @@ export default function bot() {
                                 <Bot className="w-4 h-4 text-white" />
                             </div>
                         )}
-                        <div className={`max-w-xs px-4 py-3 rounded-2xl text-sm ${
+                        <div className={`max-w-[75vw] px-4 py-3 rounded-2xl text-sm ${
                             msg.role === 'user'
                                 ? 'bg-green-500 text-white rounded-tr-sm'
                                 : 'bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100'
@@ -97,7 +80,6 @@ export default function bot() {
                         )}
                     </div>
                 ))}
-
                 {loading && (
                     <div className="flex gap-2 justify-start">
                         <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -108,11 +90,9 @@ export default function bot() {
                         </div>
                     </div>
                 )}
-
                 <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
             <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 p-3">
                 <div className="flex gap-2 items-end">
                     <textarea
@@ -126,7 +106,7 @@ export default function bot() {
                     <button
                         onClick={sendMessage}
                         disabled={loading || !input.trim()}
-                        className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center disabled:opacity-50 flex-shrink-0"
+                        className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center disabled:opacity-50 flex-shrink-0 active:bg-green-600"
                     >
                         <Send className="w-4 h-4 text-white" />
                     </button>

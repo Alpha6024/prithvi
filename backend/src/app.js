@@ -13,20 +13,29 @@ const upload=multer({storage:multer.memoryStorage()})
 
 const app = express();
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+        else callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 app.use(express.json());
 
 app.use(session({
-    secret: 'your-secret-key-change-this-in-production',
+    secret: process.env.PRIVATE_KEY,
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: false
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 }));
 
@@ -36,7 +45,7 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:3000/auth/google/callback'
+    callbackURL: `${process.env.BASE_URL}/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await usermodel.findOne({ googleId: profile.id });
@@ -116,11 +125,11 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 app.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: 'http://localhost:5173/acc' }),
+    passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/acc` }),
     (req, res) => {
-        const redirectUrl = req.user.isNewUser 
-            ? 'http://localhost:5173/newacc' 
-            : 'http://localhost:5173/acc/home';
+        const redirectUrl = req.user.isNewUser
+            ? `${process.env.FRONTEND_URL}/newacc`
+            : `${process.env.FRONTEND_URL}/acc/home`;
         res.redirect(redirectUrl);
     }
 );
@@ -1457,6 +1466,51 @@ app.put("/admin/campaign/flag/:id", async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// Supabase session sync — verifies JWT and creates backend session
+app.post('/auth/supabase-session', async (req, res) => {
+    try {
+        const { access_token } = req.body;
+        if (!access_token) return res.status(400).json({ success: false, message: 'No token provided' });
+
+        // Verify token with Supabase
+        const supabaseRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+                apikey: process.env.SUPABASE_ANON_KEY
+            }
+        });
+
+        const supabaseUser = await supabaseRes.json();
+        if (!supabaseUser.id) return res.status(401).json({ success: false, message: 'Invalid token' });
+
+        // Find or create user in MongoDB
+        let user = await usermodel.findOne({
+            $or: [{ supabase_uid: supabaseUser.id }, { email: supabaseUser.email }]
+        });
+
+        let isNewUser = false;
+        if (!user) {
+            user = await usermodel.create({
+                supabase_uid: supabaseUser.id,
+                email: supabaseUser.email,
+                name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || '',
+                avatar: supabaseUser.user_metadata?.avatar_url || null,
+                isNewUser: true
+            });
+            isNewUser = true;
+        } else if (!user.supabase_uid) {
+            await usermodel.findByIdAndUpdate(user._id, { supabase_uid: supabaseUser.id });
+        }
+
+        req.login(user, (err) => {
+            if (err) return res.status(500).json({ success: false, message: 'Session creation failed' });
+            res.json({ success: true, isNewUser: user.isNewUser || isNewUser, user });
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

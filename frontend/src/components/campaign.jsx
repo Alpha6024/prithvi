@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Home, Target, Trophy, User, ArrowLeft, Users, TrendingUp, X, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function Campaign() {
     const navigate = useNavigate();
     const fileRef = useRef(null);
@@ -46,7 +48,7 @@ export default function Campaign() {
 
     const fetchCurrentUser = async () => {
         try {
-            const res = await fetch('http://localhost:3000/auth/user', { credentials: 'include' });
+            const res = await fetch(`${API}/auth/user`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCurrentUser(data.user);
         } catch (err) { console.error(err); }
@@ -54,7 +56,7 @@ export default function Campaign() {
 
     const fetchCampaigns = async () => {
         try {
-            const res = await fetch('http://localhost:3000/campaign/all', { credentials: 'include' });
+            const res = await fetch(`${API}/campaign/all`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setCampaigns(data.campaigns);
         } catch (err) { console.error(err); }
@@ -63,7 +65,7 @@ export default function Campaign() {
 
     const fetchNotifications = async () => {
         try {
-            const res = await fetch('http://localhost:3000/user/notifications', { credentials: 'include' });
+            const res = await fetch(`${API}/user/notifications`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setNotifications(data.notifications);
         } catch (err) { console.error(err); }
@@ -72,7 +74,7 @@ export default function Campaign() {
     const openNotifications = async () => {
         await fetchNotifications();
         setShowNotifications(true);
-        await fetch('http://localhost:3000/user/notifications/read', {
+        await fetch(`${API}/user/notifications/read`, {
             method: 'PUT',
             credentials: 'include'
         });
@@ -82,7 +84,7 @@ export default function Campaign() {
         setRequestsModal(campaign);
         setRequestsLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/campaign/requests/${campaign._id}`, { credentials: 'include' });
+            const res = await fetch(`${API}/campaign/requests/${campaign._id}`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) setRequests(data.requests);
         } catch (err) { console.error(err); }
@@ -91,7 +93,7 @@ export default function Campaign() {
 
     const handleRequestAction = async (campaignId, userId, action) => {
         try {
-            const res = await fetch(`http://localhost:3000/campaign/request/${campaignId}/${userId}`, {
+            const res = await fetch(`${API}/campaign/request/${campaignId}/${userId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -159,8 +161,8 @@ export default function Campaign() {
             if (imageFile) formData.append('image', imageFile);
 
             const url = editingCampaign
-                ? `http://localhost:3000/campaign/update/${editingCampaign._id}`
-                : 'http://localhost:3000/campaign/create';
+                ? `${API}/campaign/update/${editingCampaign._id}`
+                : `${API}/campaign/create`;
             const method = editingCampaign ? 'PUT' : 'POST';
 
             const res = await fetch(url, { method, credentials: 'include', body: formData });
@@ -180,7 +182,7 @@ export default function Campaign() {
 
     const handleJoin = async (campaignId) => {
         try {
-            const res = await fetch(`http://localhost:3000/campaign/join/${campaignId}`, {
+            const res = await fetch(`${API}/campaign/join/${campaignId}`, {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -200,7 +202,7 @@ export default function Campaign() {
     const campaignAmount = amount - poolCut;
 
     try {
-        const res = await fetch("http://localhost:3000/payment/create-order", {
+        const res = await fetch(`${API}/payment/create-order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ amount }),
@@ -209,14 +211,14 @@ export default function Campaign() {
         if (!order.id) return alert('Failed to create order');
 
         const options = {
-            key: "rzp_test_SGtmofw4CWXzzG",
+            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: order.amount,
             currency: "INR",
             name: "Prithvi Campaign Donation",
             description: `₹${campaignAmount} to campaign • ₹${poolCut} to platform pool`,
             order_id: order.id,
             handler: async function () {
-                const result = await fetch(`http://localhost:3000/campaign/donate/${campaignId}`, {
+                const result = await fetch(`${API}/campaign/donate/${campaignId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -682,29 +684,28 @@ export default function Campaign() {
 
             <button
                 onClick={() => navigate("/acc/bot")}
-                className="fixed bottom-24 right-4 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-xl z-20 hover:bg-green-600 transition-colors"
+                className="fixed bottom-20 right-4 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl z-20 active:bg-green-600"
             >
-                <span className="text-2xl">🤖</span>
+                <span className="text-xl">🤖</span>
             </button>
 
-            {/* Bottom Nav */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 max-w-md mx-auto">
-                <div className="flex items-center justify-around py-3">
-                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-1 text-gray-500">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+                <div className="max-w-md mx-auto flex items-center justify-around py-2">
+                    <button onClick={() => navigate("/acc/home")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <Home className="w-6 h-6" /><span className="text-xs">Home</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-green-600">
+                    <button className="flex flex-col items-center gap-0.5 text-green-600 min-w-[48px] py-1">
                         <Target className="w-6 h-6" fill="currentColor" /><span className="text-xs">Campaign</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-1 text-gray-500">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-6 shadow-lg">
+                    <button onClick={() => navigate("/acc/home/post")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
+                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center -mt-5 shadow-lg">
                             <Plus className="w-6 h-6 text-white" strokeWidth={3} />
                         </div>
                     </button>
-                    <button onClick={() => navigate("/acc/home/leaderboard")} className="flex flex-col items-center gap-1 text-gray-500">
-                        <Trophy className="w-6 h-6" /><span className="text-xs">Leaderboard</span>
+                    <button onClick={() => navigate("/acc/home/leaderboard")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
+                        <Trophy className="w-6 h-6" /><span className="text-xs">Ranks</span>
                     </button>
-                    <button onClick={() => navigate("/acc/home/profile")} className="flex flex-col items-center gap-1 text-gray-500">
+                    <button onClick={() => navigate("/acc/home/profile")} className="flex flex-col items-center gap-0.5 text-gray-500 min-w-[48px] py-1">
                         <User className="w-6 h-6" /><span className="text-xs">Profile</span>
                     </button>
                 </div>

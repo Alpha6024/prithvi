@@ -19,6 +19,7 @@ import Bot from "./components/bot";
 import Fund from "./components/fund";
 import Feedback from "./components/feedback";
 import Admin from "./components/admin";
+import AuthCallback from "./components/authcallback";
 
 const router = createBrowserRouter([
   {
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
 },{
 path:"/admin",
 element:<Admin/>
+},
+{
+path:"/auth/callback",
+element:<AuthCallback/>
 }
 ]);
 

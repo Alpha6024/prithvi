@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, ArrowRight } from 'lucide-react';
+import { supabase } from '../supabase';
+
+const API = import.meta.env.VITE_API_URL;
 
 export default function Acc() {
     const navigate = useNavigate();
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -14,30 +17,42 @@ export default function Acc() {
         setError('');
         setLoading(true);
 
+        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (authError) {
+            setError(authError.message);
+            setLoading(false);
+            return;
+        }
+
+        // Sync session with backend
         try {
-            const res = await fetch('http://localhost:3000/user/login', {
+            const res = await fetch(`${API}/auth/supabase-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ access_token: data.session.access_token })
             });
-
-            const data = await res.json();
-
-            if (data.success) {
-                navigate("/acc/home");
+            const result = await res.json();
+            if (result.success) {
+                navigate('/acc/home');
             } else {
-                setError(data.message || 'Login failed');
+                setError(result.message || 'Login failed');
             }
-        } catch (err) {
+        } catch {
             setError('Server error, please try again');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleGoogleSignup = () => {
-        window.location.href = 'http://localhost:3000/auth/google';
+    const handleGoogleLogin = async () => {
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`
+            }
+        });
     };
 
     return (
@@ -55,16 +70,14 @@ export default function Acc() {
 
                 <form onSubmit={handleLogin} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                            Username
-                        </label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Email</label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                placeholder="naturelover"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
                                 required
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
@@ -73,9 +86,7 @@ export default function Acc() {
 
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                                Password
-                            </label>
+                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">Password</label>
                             <button type="button" className="cursor-pointer text-xs text-green-500 font-medium">
                                 Forgot Password?
                             </button>
@@ -93,7 +104,6 @@ export default function Acc() {
                         </div>
                     </div>
 
-                    {/* Error message */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
                             {error}
@@ -123,7 +133,7 @@ export default function Acc() {
                 </div>
 
                 <button
-                    onClick={handleGoogleSignup}
+                    onClick={handleGoogleLogin}
                     className="cursor-pointer w-full border border-gray-300 py-3 rounded-lg font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -147,15 +157,15 @@ export default function Acc() {
                     <span>•</span>
                     <button className="hover:text-gray-700">TERMS OF SERVICE</button>
                 </div>
-                {/* Admin Login Section */}
-<div className="mt-4 pt-4 border-t border-gray-100 text-center">
-    <button 
-        onClick={() => navigate("/admin")}
-        className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 font-medium uppercase tracking-widest transition-colors"
-    >
-        Admin Portal
-    </button>
-</div>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                    <button
+                        onClick={() => navigate("/admin")}
+                        className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 font-medium uppercase tracking-widest transition-colors"
+                    >
+                        Admin Portal
+                    </button>
+                </div>
             </div>
         </div>
     );

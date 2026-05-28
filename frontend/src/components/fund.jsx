@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-const API = "http://localhost:3000";
-const RAZORPAY_KEY = "rzp_test_SGtmofw4CWXzzG";
+const API = import.meta.env.VITE_API_URL;
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 export default function Fund() {
   const navigate = useNavigate();
