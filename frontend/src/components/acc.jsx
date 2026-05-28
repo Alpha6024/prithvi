@@ -7,7 +7,7 @@ const API = import.meta.env.VITE_API_URL;
 
 export default function Acc() {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,29 +16,16 @@ export default function Acc() {
         e.preventDefault();
         setError('');
         setLoading(true);
-
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (authError) {
-            setError(authError.message);
-            setLoading(false);
-            return;
-        }
-
-        // Sync session with backend
         try {
-            const res = await fetch(`${API}/auth/supabase-session`, {
+            const res = await fetch(`${API}/user/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ access_token: data.session.access_token })
+                body: JSON.stringify({ username, password })
             });
-            const result = await res.json();
-            if (result.success) {
-                navigate('/acc/home');
-            } else {
-                setError(result.message || 'Login failed');
-            }
+            const data = await res.json();
+            if (data.success) navigate('/acc/home');
+            else setError(data.message || 'Login failed');
         } catch {
             setError('Server error, please try again');
         } finally {
@@ -49,9 +36,7 @@ export default function Acc() {
     const handleGoogleLogin = async () => {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`
-            }
+            options: { redirectTo: `${window.location.origin}/auth/callback` }
         });
     };
 
@@ -59,7 +44,7 @@ export default function Acc() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
             <div className="w-full max-w-md m-4 bg-white rounded-lg shadow-sm p-8">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mb-4">
+                    <div className="w-20 h-20 bg-green-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                         <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
                         </svg>
@@ -70,59 +55,33 @@ export default function Acc() {
 
                 <form onSubmit={handleLogin} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Email</label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Username</label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                required
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            />
+                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+                                placeholder="naturelover" required
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
                         </div>
                     </div>
 
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">Password</label>
-                            <button type="button" className="cursor-pointer text-xs text-green-500 font-medium">
-                                Forgot Password?
-                            </button>
+                            <button type="button" className="cursor-pointer text-xs text-green-500 font-medium">Forgot Password?</button>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            />
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••" required
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
                         </div>
                     </div>
 
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
-                            {error}
-                        </div>
-                    )}
+                    {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="cursor-pointer w-full bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <>
-                                <ArrowRight className="w-5 h-5" />
-                                Login
-                            </>
-                        )}
+                    <button type="submit" disabled={loading}
+                        className="cursor-pointer w-full bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                        {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" />Login</>}
                     </button>
                 </form>
 
@@ -132,10 +91,8 @@ export default function Acc() {
                     <div className="flex-1 h-px bg-gray-300"></div>
                 </div>
 
-                <button
-                    onClick={handleGoogleLogin}
-                    className="cursor-pointer w-full border border-gray-300 py-3 rounded-lg font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-                >
+                <button onClick={handleGoogleLogin}
+                    className="cursor-pointer w-full border border-gray-300 py-3 rounded-lg font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -145,9 +102,8 @@ export default function Acc() {
                     Sign in with Google
                 </button>
 
-                <div onClick={() => navigate("/createacc")} className="mt-6 text-center">
-                    <p className="text-sm text-gray-600">
-                        Don't have an account?{' '}
+                <div onClick={() => navigate("/createacc")} className="mt-6 text-center cursor-pointer">
+                    <p className="text-sm text-gray-600">Don't have an account?{' '}
                         <button className="cursor-pointer text-green-500 font-semibold">Sign Up</button>
                     </p>
                 </div>
@@ -159,10 +115,8 @@ export default function Acc() {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-                    <button
-                        onClick={() => navigate("/admin")}
-                        className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 font-medium uppercase tracking-widest transition-colors"
-                    >
+                    <button onClick={() => navigate("/admin")}
+                        className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 font-medium uppercase tracking-widest transition-colors">
                         Admin Portal
                     </button>
                 </div>

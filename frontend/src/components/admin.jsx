@@ -227,6 +227,22 @@ export default function Admin() {
                         <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
                         <p className="text-gray-400 text-sm mt-1">Prithvi Platform</p>
                     </div>
+                    {/* Demo credentials for recruiters */}
+                    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 mb-4 text-center">
+                        <p className="text-xs text-gray-400 uppercase font-semibold mb-2 tracking-widest">Demo Credentials</p>
+                        <div className="flex justify-center gap-6">
+                            <div>
+                                <p className="text-xs text-gray-500">Username</p>
+                                <p className="text-green-400 font-mono font-bold text-sm">admin</p>
+                            </div>
+                            <div className="w-px bg-gray-700" />
+                            <div>
+                                <p className="text-xs text-gray-500">Password</p>
+                                <p className="text-green-400 font-mono font-bold text-sm">prithvi@2026</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
                         <div className="mb-4">
                             <label className="text-xs text-gray-400 uppercase font-semibold mb-1 block">Username</label>

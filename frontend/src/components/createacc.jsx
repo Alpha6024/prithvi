@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Phone, ArrowRight, Camera } from 'lucide-react';
-import { supabase } from '../supabase';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -9,74 +8,40 @@ export default function CreateAcc() {
     const navigate = useNavigate();
     const fileRef = useRef(null);
 
-    const [form, setForm] = useState({
-        name: '', email: '', username: '', password: '', confirmPassword: '', mob: ''
-    });
+    const [form, setForm] = useState({ name: '', email: '', username: '', password: '', confirmPassword: '', mob: '' });
     const [avatar, setAvatar] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setError('');
-    };
+    const handleChange = (e) => { setForm({ ...form, [e.target.name]: e.target.value }); setError(''); };
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setAvatar(file);
-            setAvatarPreview(URL.createObjectURL(file));
-        }
+        if (file) { setAvatar(file); setAvatarPreview(URL.createObjectURL(file)); }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
         if (form.password !== form.confirmPassword) return setError("Passwords don't match");
         if (form.password.length < 6) return setError("Password must be at least 6 characters");
         if (form.username.length < 3) return setError("Username must be at least 3 characters");
 
         setLoading(true);
-
         try {
-            // 1. Create Supabase auth user
-            const { data, error: authError } = await supabase.auth.signUp({
-                email: form.email,
-                password: form.password,
-                options: { data: { name: form.name, username: form.username } }
-            });
-
-            if (authError) {
-                setError(authError.message);
-                setLoading(false);
-                return;
-            }
-
-            // 2. Create profile in MongoDB via backend
             const formData = new FormData();
             formData.append('name', form.name);
             formData.append('email', form.email);
             formData.append('username', form.username);
             formData.append('password', form.password);
-            formData.append('supabase_uid', data.user.id);
             if (form.mob) formData.append('mob', form.mob);
             if (avatar) formData.append('avatar', avatar);
 
-            const res = await fetch(`${API}/user/signup`, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
-            });
-
-            const result = await res.json();
-
-            if (result.success) {
-                navigate('/acc/home');
-            } else {
-                setError(result.message || 'Something went wrong');
-            }
+            const res = await fetch(`${API}/user/signup`, { method: 'POST', credentials: 'include', body: formData });
+            const data = await res.json();
+            if (data.success) navigate('/acc/home');
+            else setError(data.message || 'Something went wrong');
         } catch {
             setError('Server error, please try again');
         } finally {
@@ -87,9 +52,8 @@ export default function CreateAcc() {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
-
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-3">
+                    <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
                         <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
                         </svg>
@@ -99,10 +63,8 @@ export default function CreateAcc() {
                 </div>
 
                 <div className="flex flex-col items-center mb-6">
-                    <div
-                        className="relative w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 transition-colors"
-                        onClick={() => fileRef.current.click()}
-                    >
+                    <div className="relative w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 transition-colors"
+                        onClick={() => fileRef.current.click()}>
                         {avatarPreview ? (
                             <img src={avatarPreview} alt="avatar" className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -173,29 +135,16 @@ export default function CreateAcc() {
                         </div>
                     </div>
 
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>
-                    )}
+                    {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <>
-                                <ArrowRight className="w-5 h-5" />
-                                Create Account
-                            </>
-                        )}
+                    <button type="submit" disabled={loading}
+                        className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                        {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><ArrowRight className="w-5 h-5" />Create Account</>}
                     </button>
                 </form>
 
                 <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600">
-                        Already have an account?{' '}
+                    <p className="text-sm text-gray-600">Already have an account?{' '}
                         <button onClick={() => navigate('/acc')} className="text-green-500 font-semibold cursor-pointer">Login</button>
                     </p>
                 </div>
